@@ -88,7 +88,7 @@ function setupSync() {
   if (location.protocol !== 'file:') {
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'hcm-sync.js';
+    script.src = 'hcm-sync.js?v=1791656026';
     document.body.append(script);
     return;
   }
