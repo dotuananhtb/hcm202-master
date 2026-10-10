@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ôn thi HCM202 &amp; MLN131</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <button id="home-btn" class="brand" type="button">Ôn thi <span>Kỳ 9</span></button>
+  <div class="topbar-right">
+    <span id="deck-label" class="deck-label"></span>
+    <button id="theme-btn" class="icon-btn" type="button" title="Đổi giao diện">◐</button>
+  </div>
+</header>
+
+<main id="screen-home" class="screen">
+  <section class="card">
+    <h1>Ngân hàng câu hỏi</h1>
+    <p class="muted" id="bank-summary">Đang tải…</p>
+    <div class="grid" id="stats"></div>
+  </section>
+
+  <section class="card">
+    <h2>Bắt đầu luyện</h2>
+    <div class="field">
+      <label>Môn</label>
+      <div class="chips" id="subject-chips"></div>
+    </div>
+    <div class="field">
+      <label>Năm</label>
+      <div class="chips" id="year-chips"></div>
+    </div>
+    <div class="field">
+      <label>Bộ đề</label>
+      <select id="exam-select"><option value="">Tất cả (trộn ngẫu nhiên)</option></select>
+    </div>
+    <div class="field">
+      <label>Số câu</label>
+      <div class="chips" id="count-chips"></div>
+    </div>
+    <div class="field">
+      <label>Chế độ</label>
+      <div class="chips" id="mode-chips"></div>
+    </div>
+    <div class="field checks">
+      <label><input type="checkbox" id="only-unseen"> Chỉ câu chưa làm</label>
+    </div>
+    <p class="muted small" id="filter-info"></p>
+    <div class="row">
+      <button id="start-btn" class="primary" type="button">Bắt đầu</button>
+      <button id="resume-btn" class="secondary hidden" type="button">Làm tiếp</button>
+    </div>
+  </section>
+
+  <section class="card hidden" id="history-card">
+    <h2>Bài đã làm gần đây</h2>
+    <div id="history" class="history"></div>
+  </section>
+
+  <section class="card">
+    <h2>Ôn lại</h2>
+    <div class="row">
+      <button id="wrong-btn" class="secondary" type="button">Làm lại câu sai (<span id="wrong-count">0</span>)</button>
+      <button id="marked-btn" class="secondary" type="button">Câu đã đánh dấu (<span id="marked-count">0</span>)</button>
+      <button id="review-flagged-btn" class="secondary" type="button">Câu cần đối chiếu (<span id="flagged-count">0</span>)</button>
+      <button id="browse-btn" class="secondary" type="button">Tra cứu ngân hàng</button>
+      <button id="reset-btn" class="ghost" type="button">Xoá tiến độ</button>
+    </div>
+  </section>
+</main>
+
+<main id="screen-quiz" class="screen hidden">
+  <div class="progress"><div id="progress-bar"></div></div>
+  <section class="card question-card">
+    <div class="q-head">
+      <span id="q-counter" class="badge"></span>
+      <span id="q-meta" class="muted small"></span>
+      <button id="explain-btn" class="toggle-btn" type="button"
+              title="Ẩn/hiện phần giải thích">Giải thích</button>
+      <button id="image-mode-btn" class="toggle-btn" type="button"
+              title="Chuyển giữa chữ đã gõ lại và ảnh đề gốc">Ảnh gốc</button>
+      <button id="mark-btn" class="icon-btn" type="button" title="Đánh dấu câu này">☆</button>
+    </div>
+    <p id="q-text" class="q-text"></p>
+    <p id="q-hint" class="q-hint hidden"></p>
+    <div id="q-layout" class="q-layout">
+      <div id="q-options" class="options"></div>
+      <div id="q-image-box" class="q-image-box hidden">
+        <img id="q-image" alt="Ảnh đề gốc">
+      </div>
+    </div>
+    <div id="q-feedback" class="feedback hidden"></div>
+    <div class="row between">
+      <button id="prev-btn" class="ghost" type="button">← Câu trước</button>
+      <button id="img-btn" class="ghost" type="button">Phóng to ảnh gốc</button>
+      <button id="next-btn" class="primary" type="button">Câu sau →</button>
+    </div>
+  </section>
+</main>
+
+<main id="screen-result" class="screen hidden">
+  <section class="card">
+    <h1>Kết quả</h1>
+    <div id="result-score" class="score"></div>
+    <div class="row">
+      <button id="retry-wrong-btn" class="primary" type="button">Làm lại câu sai</button>
+      <button id="review-btn" class="secondary" type="button">Xem lại bài</button>
+      <button id="back-home-btn" class="ghost" type="button">Về trang chủ</button>
+    </div>
+    <div id="result-list" class="result-list"></div>
+  </section>
+</main>
+
+<main id="screen-browse" class="screen hidden">
+  <section class="card">
+    <h1>Tra cứu ngân hàng</h1>
+    <input id="search-input" class="search" type="search" placeholder="Gõ từ khoá trong câu hỏi…">
+    <p class="muted small" id="search-info"></p>
+    <div id="search-results" class="result-list"></div>
+  </section>
+</main>
+
+<div id="image-modal" class="modal hidden">
+  <div class="modal-inner">
+    <button id="modal-close" class="icon-btn" type="button">✕</button>
+    <img id="modal-img" alt="Ảnh đề gốc">
+  </div>
+</div>
+
+<!-- Script thuong (khong phai module) de mo bang file:// van chay.
+     Thu tu nap quan trong: file sau dung ham cua file truoc. -->
+<script src="../data/questions.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/home-screen.js"></script>
+<script src="js/session.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

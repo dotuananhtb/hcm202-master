@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HCM202 cô đọng</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Bo sung rieng cho trang the co dong; mau sac dung bien cua style.css */
+  .mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .mode-btn{text-align:left;padding:14px;border:1px solid var(--line);border-radius:12px;
+    background:var(--bg);color:var(--text);cursor:pointer}
+  .mode-btn:hover{border-color:var(--accent)}
+  .mode-btn b{display:block;margin-bottom:4px}
+  .mode-btn span{color:var(--muted);font-size:13px}
+  .flash{min-height:260px;cursor:pointer}
+  .flash .topic{font-size:20px;font-weight:700;margin:4px 0 12px}
+  .prompts{margin:0;padding-left:20px;color:var(--muted)}
+  .prompts li{margin-bottom:4px}
+  .core{font-size:16px;line-height:1.65;padding:12px 14px;border-radius:10px;
+    background:var(--accent-soft);border-left:4px solid var(--accent)}
+  .answers{margin:8px 0 0;padding-left:20px}
+  .answers li{margin-bottom:8px}
+  .answers .pq{display:block;color:var(--muted);font-size:13px}
+  .answers .pa{display:block;font-weight:700;color:var(--ok)}
+  .answers li.neg .pa{color:var(--bad)}
+  .warn-text{color:var(--warn)}
+  .kw{font-weight:800;background:var(--warn-soft);border-radius:3px;padding:0 2px}
+  .kw.ans,.option.correct .kw,.answers .pa .kw,.origin-item .opt.ok .kw{background:var(--ok-soft);color:var(--ok)}
+  /* style.css lam mo moi nut da khoa; dap an dung/sai sau khi cham can doc ro */
+  .option.correct:disabled,.option.wrong:disabled{opacity:1}
+  .sync-card{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px}
+  .sync-status{font-size:13px;color:var(--muted);margin-right:auto}
+  .sync-status.ok{color:var(--ok)} .sync-status.warn{color:var(--warn)}
+  .sync-btn{padding:7px 14px;font-size:13px}
+  .resume{width:100%;margin-bottom:10px;font-weight:700}
+  .left-count{margin-left:auto;color:var(--accent);font-weight:600}
+  .mode-btn.primary-mode{border-color:var(--accent);background:var(--accent-soft)}
+  .traps{margin:6px 0 0;padding-left:20px;color:var(--bad);font-size:14px}
+  .traps li{text-decoration:line-through;text-decoration-color:var(--bad)}
+  .section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted);margin:14px 0 4px}
+  details.origin{margin-top:12px;font-size:14px}
+  details.origin summary{cursor:pointer;color:var(--accent)}
+  .origin-item{padding:8px 10px;margin-top:6px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+  .origin-item .opt{display:block;color:var(--muted)}
+  .origin-item .opt.ok{color:var(--ok);font-weight:700}
+  .hint-row{color:var(--muted);font-size:13px;text-align:center;margin-top:10px}
+  .ch-title{font-size:15px;margin:8px 0 0;color:var(--accent)}
+  .read-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  .read-card h3{margin:0 0 8px;font-size:16px}
+  .read-card .core{font-size:15px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button id="home-btn" class="brand" type="button">HCM202 <span>cô đọng</span></button>
+  <div class="topbar-right">
+    <span id="deck-label" class="deck-label"></span>
+    <a class="deck-label" href="index.html">Ngân hàng đầy đủ</a>
+    <button id="theme-btn" class="icon-btn" type="button" title="Đổi giao diện">◐</button>
+  </div>
+</header>
+
+<main id="screen-home" class="screen">
+  <section class="card sync-card" id="sync-box">
+    <span class="sync-status">Đang kiểm tra đồng bộ…</span>
+  </section>
+
+  <section class="card">
+    <h1>Học ít thẻ, làm được cả bộ đề</h1>
+    <p class="muted" id="summary">Đang tải…</p>
+    <div class="grid" id="stats"></div>
+  </section>
+
+  <section class="card">
+    <h2>Chọn phạm vi</h2>
+    <div class="field">
+      <label>Chương</label>
+      <div class="chips" id="chapter-chips"></div>
+    </div>
+    <div class="field checks">
+      <label><input type="checkbox" id="only-unknown" autocomplete="off"> Chỉ thẻ / câu chưa thuộc</label>
+    </div>
+    <div class="field">
+      <label>Số câu mỗi lượt (học / kiểm tra)</label>
+      <div class="chips" id="count-chips"></div>
+    </div>
+    <p class="muted small" id="scope-info"></p>
+    <button id="resume-btn" class="primary hidden resume" type="button"></button>
+    <div class="mode-grid">
+      <button class="mode-btn primary-mode" type="button" data-mode="learn"><b id="learn-label">Học câu đại diện</b><span>Mỗi nhóm 1 câu, từ khoá in đậm, chỉ lấy câu chưa làm đúng — học hết là đủ</span></button>
+      <button class="mode-btn primary-mode" type="button" data-mode="learn-all"><b id="learn-all-label">Học 589 câu gốc</b><span>Lần lượt mọi câu gốc theo chủ đề, từ khoá in đậm, chỉ lấy câu chưa làm đúng</span></button>
+      <button class="mode-btn" type="button" data-mode="redo"><b id="redo-label">Làm lại câu sai</b><span>Câu từng làm sai ở mọi chế độ; làm đúng thì tự xoá khỏi danh sách</span></button>
+      <button class="mode-btn" type="button" data-mode="flash"><b>Lật thẻ</b><span>Xem đề → lật xem ý cốt lõi, tự chấm thuộc/chưa thuộc</span></button>
+      <button class="mode-btn" type="button" data-mode="card-quiz"><b>Trắc nghiệm theo thẻ</b><span>Mỗi thẻ hỏi 1 câu gốc ngẫu nhiên</span></button>
+      <button class="mode-btn" type="button" data-mode="full-test"><b>Kiểm tra câu gốc</b><span>Làm câu gốc để chắc học thẻ là đủ</span></button>
+      <button class="mode-btn" type="button" data-mode="read"><b>Đọc nhanh</b><span>Danh sách thẻ theo chương, tìm kiếm</span></button>
+    </div>
+    <div class="row between">
+      <span class="muted small" id="wrong-info"></span>
+      <button id="reset-btn" class="ghost" type="button">Xoá tiến độ</button>
+    </div>
+  </section>
+</main>
+
+<main id="screen-flash" class="screen hidden">
+  <div class="progress"><div id="flash-bar"></div></div>
+  <section class="card flash" id="flash-card"></section>
+  <div class="row between">
+    <button id="flash-prev" class="ghost" type="button">← Trước</button>
+    <div class="row">
+      <button id="flash-again" class="secondary" type="button">Chưa thuộc</button>
+      <button id="flash-known" class="primary" type="button">Đã thuộc</button>
+    </div>
+    <button id="flash-next" class="ghost" type="button">Sau →</button>
+  </div>
+  <p class="hint-row">Bấm thẻ hoặc phím cách để lật · ← → chuyển thẻ · 1 chưa thuộc · 2 đã thuộc</p>
+</main>
+
+<main id="screen-quiz" class="screen hidden">
+  <div class="progress"><div id="quiz-bar"></div></div>
+  <section class="card">
+    <div class="q-head"><span class="badge" id="quiz-count"></span><span id="quiz-meta" class="muted small"></span><span id="quiz-left" class="small left-count"></span></div>
+    <p class="q-text" id="quiz-question"></p>
+    <p class="q-hint hidden" id="quiz-hint"></p>
+    <div class="options" id="quiz-options"></div>
+    <div class="feedback hidden" id="quiz-feedback"></div>
+    <div class="row between">
+      <button id="quiz-quit" class="ghost" type="button">Kết thúc</button>
+      <button id="quiz-next" class="primary" type="button" disabled>Câu tiếp →</button>
+    </div>
+  </section>
+</main>
+
+<main id="screen-result" class="screen hidden">
+  <section class="card">
+    <h1 id="result-title">Kết quả</h1>
+    <div class="score" id="result-score"></div>
+    <p class="muted" id="result-note"></p>
+    <div class="row">
+      <button id="result-redo" class="primary" type="button">Làm lại câu sai</button>
+      <button id="result-review" class="secondary" type="button">Ôn lại các thẻ sai</button>
+      <button id="result-home" class="secondary" type="button">Về trang chủ</button>
+    </div>
+    <div class="result-list" id="result-list"></div>
+  </section>
+</main>
+
+<main id="screen-read" class="screen hidden">
+  <section class="card">
+    <input id="read-search" class="search" type="search" autocomplete="off" placeholder="Tìm theo từ khoá (gõ không dấu cũng được)…">
+    <p class="muted small" id="read-info"></p>
+  </section>
+  <div id="read-list" class="result-list"></div>
+</main>
+
+<script src="../data/hcm_master.js"></script>
+<script src="hcm-master.js"></script>
+</body>
+</html>
