@@ -19,6 +19,11 @@ const firebaseConfig = {
 };
 
 const SAVE_DELAY_MS = 1200;
+// Cac email dung chung 1 ngan tien do (rules: nhanh hcmShared/<ma> chi cho dung cac email nay)
+const SHARED_BY_EMAIL = {
+  'dotuananhofficial@gmail.com': 'dotuananh',
+  'tuananhx939@gmail.com': 'dotuananh',
+};
 const box = document.getElementById('sync-box');
 const master = window.HcmMaster;
 
@@ -61,6 +66,7 @@ function startSync() {
   let saveTimer = null;
   let lastSent = '';
   let user = null;
+  let currentNode = null;
 
   const showSignedOut = (note) => {
     box.replaceChildren(
@@ -72,17 +78,17 @@ function startSync() {
 
   const showSignedIn = (text, tone = 'ok') => {
     box.replaceChildren(
-      status(`${user.email} · ${text}`, tone),
+      status(`${user.email}${SHARED_BY_EMAIL[(user.email || '').toLowerCase()] ? ' (tiến độ chung 2 tài khoản)' : ''} · ${text}`, tone),
       button('Đăng xuất', () => signOut(auth)),
     );
   };
 
   const push = () => {
-    if (!user) return;
+    if (!user || !currentNode) return;
     const data = JSON.stringify(master.snapshot());
     if (data === lastSent) return;
     lastSent = data;
-    set(ref(db, `hcmMaster/${user.uid}`), { data, t: serverTimestamp(), device: me })
+    set(currentNode, { data, t: serverTimestamp(), device: me })
       .then(() => showSignedIn(`đã lưu lên mây ${new Date().toLocaleTimeString('vi-VN')}`))
       .catch((error) => showSignedIn(`chưa lưu được (${error.code || error.message})`, 'warn'));
   };
@@ -96,16 +102,25 @@ function startSync() {
   onAuthStateChanged(auth, async (signedIn) => {
     stopListen();
     user = signedIn;
+    currentNode = null;
     if (!user) {
       showSignedOut();
       return;
     }
     showSignedIn('đang tải tiến độ…', '');
-    const node = ref(db, `hcmMaster/${user.uid}`);
+    const shared = SHARED_BY_EMAIL[(user.email || '').toLowerCase()];
+    const own = ref(db, `hcmMaster/${user.uid}`);
+    const node = shared ? ref(db, `hcmShared/${shared}`) : own;
+    currentNode = node;
     try {
       // Lan dau dang nhap tren may nay: gop tien do may + may (khong mat cau da hoc o dau ca)
       const snap = await get(node);
       if (snap.exists()) master.merge(JSON.parse(snap.val().data));
+      // Email dung ngan chung: gop ca tien do cu da luu o ngan rieng truoc day
+      if (shared) {
+        const legacy = await get(own);
+        if (legacy.exists()) master.merge(JSON.parse(legacy.val().data));
+      }
       push();
       // Thay doi tu thiet bi khac (vd. dien thoai) -> lay ve thay the
       stopListen = onValue(node, (live) => {
